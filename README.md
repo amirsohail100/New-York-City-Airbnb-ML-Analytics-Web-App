@@ -1,8 +1,8 @@
 # 🏙️ New York City Airbnb ML & Analytics Web App
 
-An end-to-end Machine Learning web application designed to evaluate and predict New York City Airbnb listing attributes. The repository combines exploratory data analysis, a robust Scikit-Learn preprocessing pipeline (`RandomizedSearchCV`), and a custom Web Frontend interface.
+An end-to-end Machine Learning web application designed to evaluate and predict New York City Airbnb listing attributes. The repository combines exploratory data analysis, a robust Scikit-Learn preprocessing pipeline (`RandomizedSearchCV`), and a custom Web Frontend interface deployed on **Render**.
 
-[![Live App](https://img.shields.io/badge/Live-Demo-FF5A5F?style=for-the-badge&logo=airbnb)](YOUR_LIVE_APP_LINK_HERE)
+[![Deployed on Render](https://img.shields.io/badge/Render-Live%20Demo-46E3B7?style=for-the-badge&logo=render&logoColor=white)](YOUR_RENDER_LIVE_APP_LINK_HERE)
 
 ---
 
@@ -14,8 +14,8 @@ An end-to-end Machine Learning web application designed to evaluate and predict 
 
 ## 🔗 Live Application
 
-You can test the deployed application directly here:  
-👉 **[Click Here to Launch Live Demo](YOUR_LIVE_APP_LINK_HERE)**
+The application is hosted live on **Render**. You can test it directly here:  
+👉 **[Click Here to Launch Render Live Demo](YOUR_RENDER_LIVE_APP_LINK_HERE)**
 
 ---
 
