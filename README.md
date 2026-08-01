@@ -59,6 +59,22 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 └── New_York_City_.png         # Application Banner / Asset
 ```
 
+```bash
+git clone https://github.com/amirsohail100/New-York-City-Airbnb-ML-Analytics-Web-App.git
+```
+
+```bash
+cd New-York-City-Airbnb-ML-Analytics-Web-App
+```
+
+```bash
+streamlit run app.py
+```
+
+```bash
+pip install -r requirements.txt
+```
+
 ## 📄 License
 
 This project is licensed under the MIT License.
