@@ -46,6 +46,9 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 
 ```text
 ├── AB_NYC_2019.csv            # NYC Airbnb Dataset
+├── .gitignore                 # Git Ignore File
+├── .gitattributes             # Git Attributes File
+├── requirements.txt           # Python Dependencies
 ├── notebook.ipynb             # Analysis, Pipeline Design & Model Training
 ├── main.py                    # Backend Server Script (API/Inference)
 ├── Model_Pipeline.pkl         # Serialized Scikit-Learn Pipeline
