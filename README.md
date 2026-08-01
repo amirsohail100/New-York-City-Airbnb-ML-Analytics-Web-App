@@ -12,6 +12,14 @@ An end-to-end Machine Learning web application designed to evaluate and predict 
 
 ---
 
+## 🖼️ Application Preview & UI
+
+![Credit Card Fraud Detection UI](UI.png)
+
+> _Interactive Streamlit dashboard designed with business-friendly feature inputs, fault-tolerant logic, and instant fraud probability metrics._
+
+---
+
 ## 🔗 Live Application
 
 The application is hosted live on **Render**. You can test it directly here:  
