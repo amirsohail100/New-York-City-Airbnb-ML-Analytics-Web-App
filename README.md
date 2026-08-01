@@ -59,4 +59,8 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 └── New_York_City_.png         # Application Banner / Asset
 ```
 
+## 📝 Author
+
+👤 **Amir Sohail**
+
 NYC Airbnb Machine Learning pipeline evaluating listings using Random Forest (85.1% accuracy) with ColumnTransformer preprocessing. Features a web UI (HTML/CSS/JS + FastAPI/Flask main server) &amp; serialized pipeline inference.
