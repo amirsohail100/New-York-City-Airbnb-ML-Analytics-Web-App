@@ -64,6 +64,7 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 ├── style.css                  # Custom Application Stylesheet
 ├── script.js                  # Frontend Interactivity & API Fetching
 ├── the_build_line_guide.html  # Pipeline & Application Guide Documentation
+├── UI.png                     # Application UI Preview
 └── New_York_City_.png         # Application Banner / Asset
 ```
 
