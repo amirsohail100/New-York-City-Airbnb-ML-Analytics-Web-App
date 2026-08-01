@@ -59,6 +59,10 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 └── New_York_City_.png         # Application Banner / Asset
 ```
 
+## 📄 License
+
+This project is licensed under the MIT License.
+
 ## 📝 Author
 
 👤 **Amir Sohail**
