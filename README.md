@@ -23,7 +23,7 @@ An end-to-end Machine Learning web application designed to evaluate and predict 
 ## 🔗 Live Application
 
 The application is hosted live on **Render**. You can test it directly here:  
-👉 **[Click Here to Launch Render Live Demo](YOUR_RENDER_LIVE_APP_LINK_HERE)**
+👉 **[Click Here to Launch Render Live Demo](https://new-york-city-airbnb-ml-analytics-web-xoyb.onrender.com)**
 
 ---
 
