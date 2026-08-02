@@ -3,7 +3,7 @@
 // ============================================================
 // Point this at wherever your FastAPI app is running.
 // const API_BASE_URL = "https://nyc-airbnb-room-type-predictor.onrender.com";
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://new-york-city-airbnb-ml-analytics-web-ap95.onrender.com";
 const PREDICT_ENDPOINT = `${API_BASE_URL}/predict`;
 const HEALTH_ENDPOINT = `${API_BASE_URL}/`;
 
