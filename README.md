@@ -57,6 +57,7 @@ The machine learning core uses a unified `ColumnTransformer` integrated into a S
 ├── .gitignore                 # Git Ignore File
 ├── .gitattributes             # Git Attributes File
 ├── requirements.txt           # Python Dependencies
+├── runtime.txt                # Python Runtime Version
 ├── notebook.ipynb             # Analysis, Pipeline Design & Model Training
 ├── main.py                    # Backend Server Script (API/Inference)
 ├── Model_Pipeline.pkl         # Serialized Scikit-Learn Pipeline
