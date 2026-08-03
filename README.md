@@ -14,7 +14,7 @@ An end-to-end Machine Learning web application designed to evaluate and predict 
 
 ## 🖼️ Application Preview & UI
 
-![Credit Card Fraud Detection UI](UI.png)
+![New York City Airbnb ML & Analytics Web App UI](UI.png)
 
 ---
 
