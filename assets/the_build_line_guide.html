@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Build Line — From Data to Deployed</title>
+<style>
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --navy:#0b1622;
+  --navy-2:#101f30;
+  --navy-3:#16283d;
+  --paper:#f3efe4;
+  --dim:#8ea1b8;
+  --rail-color:#233b52;
+
+  --c-ml:#00c46a;
+  --c-ml-dim:#0a4a30;
+  --c-api:#3b82f6;
+  --c-api-dim:#122a56;
+  --c-pkl:#c14fd4;
+  --c-pkl-dim:#3d1a43;
+  --c-ui:#ff7a29;
+  --c-ui-dim:#4a2a10;
+  --c-deploy:#ef4136;
+  --c-deploy-dim:#4a1512;
+
+  --active:#fccc0a;
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(252,204,10,0.05), transparent 45%),
+    radial-gradient(circle at 90% 100%, rgba(59,130,246,0.06), transparent 45%),
+    var(--navy);
+  color:var(--paper);
+  min-height:100%;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ambient drifting transit-grid background */
+.bg-grid{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  opacity:0.35;
+  background-image:
+    linear-gradient(rgba(142,161,184,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142,161,184,0.06) 1px, transparent 1px);
+  background-size:46px 46px;
+  animation:drift 26s linear infinite;
+}
+@keyframes drift{
+  from{background-position:0 0, 0 0;}
+  to{background-position:46px 46px, -46px 46px;}
+}
+.bg-dot{
+  position:fixed;
+  z-index:0;
+  pointer-events:none;
+  border-radius:50%;
+  filter:blur(1px);
+  animation:glow-float ease-in-out infinite;
+}
+@keyframes glow-float{
+  0%,100%{transform:translateY(0) scale(1); opacity:var(--dot-op,0.5);}
+  50%{transform:translateY(-22px) scale(1.15); opacity:calc(var(--dot-op,0.5) * 0.5);}
+}
+.hero, .linemap-wrap, .stage, .terminus, .foot{position:relative; z-index:1;}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{
+  padding:56px 24px 20px;
+  text-align:center;
+  max-width:760px;
+  margin:0 auto;
+}
+.hero .eyebrow{
+  display:inline-block;
+  font-size:0.72rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--active);
+  border:1px solid rgba(252,204,10,0.35);
+  padding:5px 14px;
+  border-radius:999px;
+  margin-bottom:18px;
+  opacity:0;
+  animation:hero-in .6s ease forwards;
+}
+.hero h1{
+  font-size:clamp(1.9rem, 5vw, 3rem);
+  line-height:1.08;
+  margin:0 0 14px;
+  letter-spacing:-0.02em;
+  font-weight:800;
+  opacity:0;
+  animation:hero-in .65s ease forwards .12s;
+}
+.hero h1 span{
+  color:var(--active);
+  display:inline-block;
+  animation:title-glow 2.4s ease-in-out infinite .8s;
+}
+@keyframes title-glow{
+  0%,100%{text-shadow:0 0 0 rgba(252,204,10,0);}
+  50%{text-shadow:0 0 18px rgba(252,204,10,0.5);}
+}
+.hero p{
+  color:var(--dim);
+  font-size:1.02rem;
+  max-width:520px;
+  margin:0 auto;
+  line-height:1.55;
+  opacity:0;
+  animation:hero-in .65s ease forwards .24s;
+}
+@keyframes hero-in{
+  from{opacity:0; transform:translateY(14px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* ============================================================
+   LINE MAP (nav)
+   ============================================================ */
+.linemap-wrap{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(11,22,34,0.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:18px 0 14px;
+  margin-top:30px;
+}
+.linemap{
+  max-width:920px;
+  margin:0 auto;
+  padding:0 24px;
+  position:relative;
+}
+.track{
+  position:relative;
+  height:6px;
+  background:var(--rail-color);
+  border-radius:3px;
+  margin:0 8px;
+}
+.track-fill{
+  position:absolute;
+  top:0; left:0;
+  height:100%;
+  border-radius:3px;
+  background:linear-gradient(90deg, var(--c-ml), var(--c-api), var(--c-pkl), var(--c-ui), var(--c-deploy));
+  width:0%;
+  transition:width .55s cubic-bezier(.65,0,.35,1);
+  overflow:hidden;
+}
+.track-fill::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  width:40%;
+  animation:shimmer 1.8s ease-in-out infinite;
+}
+@keyframes shimmer{
+  0%{transform:translateX(-120%);}
+  100%{transform:translateX(280%);}
+}
+.train{
+  position:absolute;
+  top:50%;
+  left:0%;
+  transform:translate(-50%,-50%);
+  font-size:1.4rem;
+  transition:left .55s cubic-bezier(.65,0,.35,1);
+  filter:drop-shadow(0 0 6px rgba(252,204,10,0.6));
+  animation:chug 1.1s ease-in-out infinite;
+}
+@keyframes chug{
+  0%,100%{transform:translate(-50%,-50%) rotate(-3deg) translateY(0);}
+  50%{transform:translate(-50%,-50%) rotate(3deg) translateY(-2px);}
+}
+.puff{
+  position:absolute;
+  top:50%;
+  width:6px; height:6px;
+  border-radius:50%;
+  background:rgba(252,204,10,0.55);
+  pointer-events:none;
+  animation:puff-out .6s ease-out forwards;
+}
+@keyframes puff-out{
+  from{opacity:0.7; transform:translate(-50%,-50%) scale(0.6);}
+  to{opacity:0; transform:translate(-50%,-180%) scale(2.2);}
+}
+.stations{
+  display:flex;
+  justify-content:space-between;
+  margin-top:-3px;
+  position:relative;
+}
+.station{
+  background:none;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  padding:6px;
+  flex:1;
+  color:var(--dim);
+  font-family:inherit;
+}
+.station .dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:var(--navy-3);
+  border:2px solid var(--rail-color);
+  transition:all .25s ease;
+}
+.station .label{
+  font-size:0.68rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  font-weight:600;
+  text-align:center;
+  transition:color .25s ease;
+}
+.station.done .dot{background:var(--active); border-color:var(--active); transform:scale(1);}
+.station.active .dot{
+  background:var(--active);
+  border-color:var(--active);
+  box-shadow:0 0 0 5px rgba(252,204,10,0.18);
+  position:relative;
+  animation:dot-pop .35s ease;
+}
+.station.active .dot::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:50%;
+  border:2px solid var(--active);
+  animation:ring-pulse 1.6s ease-out infinite;
+}
+@keyframes ring-pulse{
+  0%{transform:scale(1); opacity:0.9;}
+  100%{transform:scale(2.6); opacity:0;}
+}
+@keyframes dot-pop{
+  0%{transform:scale(0.6);}
+  60%{transform:scale(1.25);}
+  100%{transform:scale(1);}
+}
+.station.active .label{color:var(--paper);}
+.station:hover .dot{transform:scale(1.2);}
+.station:hover .label{color:var(--paper);}
+
+/* ============================================================
+   STAGE (main content)
+   ============================================================ */
+.stage{
+  max-width:720px;
+  margin:44px auto 40px;
+  padding:0 24px;
+}
+.stop-card{
+  display:none;
+  animation:rise .45s ease both;
+}
+.stop-card.active{display:block;}
+@keyframes rise{
+  from{opacity:0; transform:translateY(18px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+.stop-head{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:6px;
+}
+.stop-num{
+  font-size:0.75rem;
+  font-weight:800;
+  letter-spacing:0.1em;
+  padding:6px 12px;
+  border-radius:999px;
+  color:var(--navy);
+  white-space:nowrap;
+  animation:pop-in .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes pop-in{
+  from{opacity:0; transform:scale(0.7);}
+  to{opacity:1; transform:scale(1);}
+}
+.stop-line{
+  font-size:0.72rem;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
+.stop-title{
+  font-size:clamp(1.5rem, 4vw, 2.2rem);
+  font-weight:800;
+  margin:10px 0 6px;
+  letter-spacing:-0.01em;
+}
+.stop-title .icon-float{
+  display:inline-block;
+  animation:float-icon 2.6s ease-in-out infinite;
+}
+@keyframes float-icon{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-6px) rotate(-6deg);}
+}
+.stop-tagline{
+  color:var(--dim);
+  font-size:1rem;
+  line-height:1.6;
+  margin:0 0 30px;
+  max-width:560px;
+}
+
+.checklist{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.checklist li{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  background:var(--navy-2);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px;
+  padding:14px 16px;
+  cursor:pointer;
+  opacity:0;
+  transform:translateX(-10px);
+  animation:slide-in .4s ease forwards;
+  transition:background .2s ease, border-color .2s ease, transform .15s ease, box-shadow .2s ease;
+  user-select:none;
+  position:relative;
+  overflow:hidden;
+}
+.checklist li:hover{background:var(--navy-3); transform:translateX(2px);}
+.checklist li:active{transform:scale(0.99);}
+.checklist li.checked{
+  border-color:rgba(252,204,10,0.4);
+  animation:check-pop .32s ease;
+  opacity:1;
+  transform:translateX(0);
+}
+@keyframes check-pop{
+  0%{transform:scale(1);}
+  35%{transform:scale(1.015);}
+  100%{transform:scale(1);}
+}
+.checklist li.checked{box-shadow:0 0 0 1px rgba(252,204,10,0.15), 0 6px 16px -8px rgba(252,204,10,0.35);}
+.checklist li.checked .text{
+  color:var(--dim);
+  text-decoration:line-through;
+  text-decoration-color:rgba(142,161,184,0.5);
+}
+.check-box{
+  flex:none;
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  border:2px solid var(--rail-color);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.8rem;
+  font-weight:900;
+  color:var(--navy);
+  transition:all .18s ease;
+  margin-top:1px;
+  position:relative;
+}
+.check-box svg{
+  width:13px; height:13px;
+  stroke:var(--navy);
+  stroke-width:3.5;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-dasharray:20;
+  stroke-dashoffset:20;
+}
+.checklist li.checked .check-box{
+  background:var(--active);
+  border-color:var(--active);
+  transform:scale(1.08) rotate(-4deg);
+}
+.checklist li.checked .check-box svg{
+  animation:draw-check .3s ease .05s forwards;
+}
+@keyframes draw-check{
+  to{stroke-dashoffset:0;}
+}
+.text{font-size:0.96rem; line-height:1.5;}
+
+@keyframes slide-in{
+  to{opacity:1; transform:translateX(0);}
+}
+
+.aside-note{
+  margin-top:22px;
+  padding:14px 16px;
+  border-left:3px solid var(--active);
+  background:rgba(252,204,10,0.06);
+  border-radius:0 8px 8px 0;
+  font-size:0.9rem;
+  color:var(--paper);
+  line-height:1.55;
+  display:none;
+}
+.aside-note.show{display:block;}
+
+.progress-pill{
+  margin-top:26px;
+  font-size:0.78rem;
+  color:var(--dim);
+  letter-spacing:0.03em;
+}
+.progress-pill b{color:var(--paper);}
+
+/* nav buttons */
+.stage-nav{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:38px;
+  gap:12px;
+}
+.btn{
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  font-weight:700;
+  font-size:0.88rem;
+  padding:13px 22px;
+  border-radius:8px;
+  transition:transform .12s ease, background .15s ease, opacity .15s ease;
+  letter-spacing:0.01em;
+  position:relative;
+  overflow:hidden;
+}
+.btn:active{transform:scale(0.97);}
+.btn .ripple{
+  position:absolute;
+  border-radius:50%;
+  background:rgba(255,255,255,0.5);
+  transform:scale(0);
+  animation:ripple-out .55s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes ripple-out{
+  to{transform:scale(1); opacity:0;}
+}
+.btn-primary{background:var(--active); color:var(--navy);}
+.btn-primary:hover{background:#ffd93d;}
+.btn-ghost{background:transparent; color:var(--dim); border:1px solid var(--rail-color);}
+.btn-ghost:hover{color:var(--paper); border-color:var(--dim);}
+.btn:disabled{opacity:0.35; cursor:not-allowed;}
+
+/* ============================================================
+   TERMINUS / RECAP SCREEN
+   ============================================================ */
+.terminus{
+  display:none;
+  max-width:760px;
+  margin:0 auto 60px;
+  padding:0 24px;
+  text-align:center;
+  animation:rise .5s ease both;
+}
+.terminus.active{display:block;}
+.terminus h2{
+  font-size:clamp(1.7rem,4.5vw,2.5rem);
+  margin:0 0 10px;
+  font-weight:800;
+  animation:trophy-bounce .7s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes trophy-bounce{
+  0%{opacity:0; transform:translateY(-16px) scale(0.8);}
+  60%{opacity:1; transform:translateY(4px) scale(1.06);}
+  100%{transform:translateY(0) scale(1);}
+}
+.terminus p.sub{color:var(--dim); margin:0 0 34px; font-size:1rem;}
+.recap-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin-bottom:32px;
+}
+.recap-item{
+  padding:16px 8px;
+  border-radius:10px;
+  background:var(--navy-2);
+  border:1px solid rgba(255,255,255,0.06);
+  border-top:3px solid var(--stop-color, var(--active));
+}
+.recap-item .ic{font-size:1.3rem; margin-bottom:6px;}
+.recap-item .t{font-size:0.72rem; font-weight:700; letter-spacing:0.02em;}
+.confetti{
+  position:fixed;
+  top:-20px;
+  width:8px; height:14px;
+  opacity:0.9;
+  border-radius:2px;
+  animation:fall linear forwards;
+  z-index:99;
+}
+@keyframes fall{
+  to{transform:translateY(105vh) rotate(540deg); opacity:0.3;}
+}
+
+/* footer */
+.foot{
+  text-align:center;
+  color:var(--dim);
+  font-size:0.78rem;
+  padding:20px 24px 50px;
+  letter-spacing:0.02em;
+}
+
+@media(max-width:640px){
+  .recap-grid{grid-template-columns:repeat(3,1fr);}
+  .stations .label{font-size:0.58rem;}
+  .linemap{padding:0 12px;}
+}
+@media(max-width:420px){
+  .recap-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div id="bgDots"></div>
+
+<div class="hero">
+  <span class="eyebrow">NYC Airbnb · Room Type Predictor</span>
+  <h1>The <span>Build Line</span></h1>
+  <p>Five stops between "we have a spreadsheet" and "anyone in the world can use this."
+  Ride the whole line, tap through each stop — this is the exact route your project takes.</p>
+</div>
+
+<div class="linemap-wrap">
+  <div class="linemap">
+    <div class="track">
+      <div class="track-fill" id="trackFill"></div>
+      <div class="train" id="train">🚇</div>
+    </div>
+    <div class="stations" id="stations"></div>
+  </div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="terminus" id="terminus">
+  <h2>🏁 End of the Line</h2>
+  <p class="sub">That's the whole route — data to a link anyone can open. Here's the map you just rode.</p>
+  <div class="recap-grid" id="recapGrid"></div>
+  <button class="btn btn-primary" onclick="restart()">Ride it again</button>
+</div>
+
+
+<script>
+/* ============================================================
+   DATA — the five stops
+   ============================================================ */
+const STOPS = [
+  {
+    key:"ml",
+    label:"Model",
+    icon:"🧠",
+    color:"var(--c-ml)",
+    colorDim:"var(--c-ml-dim)",
+    line:"Line 1 — Understanding the Data",
+    title:"Machine Learning",
+    tagline:"Before anything talks to anything else, there has to be a brain. This is where we teach it.",
+    items:[
+      "Load the raw data and look around",
+      "Explore it — what patterns, what's messy, what's missing",
+      "Clean it up and engineer the features that matter",
+      "Split it into a training set and a test set",
+      "Try a few algorithms, compare how they perform",
+      "Pick the simplest one that does the job well",
+      "Test it honestly on data it has never seen",
+      "Freeze the finished model into a single reusable artifact"
+    ],
+    note:"By the end of this stop, we're not writing ML code anymore — we have one saved, trained brain, ready to be used."
+  },
+  {
+    key:"api",
+    label:"API",
+    icon:"⚡",
+    color:"var(--c-api)",
+    colorDim:"var(--c-api-dim)",
+    line:"Line 2 — Giving It a Voice",
+    title:"FastAPI",
+    tagline:"A trained model sitting on a laptop is useless to the world. FastAPI gives it a door anyone can knock on.",
+    items:[
+      "Spin up a lightweight web server",
+      "Load the saved model into memory, once, at startup",
+      "Define exactly what a valid request should look like",
+      "Open an endpoint that accepts listing details",
+      "Model predicts behind the scenes",
+      "Server hands back the answer as clean JSON"
+    ],
+    note:"This is the layer that turns \"a model in a folder\" into \"a service anything can talk to\" — a website, an app, another API."
+  },
+  {
+    key:"pkl",
+    label:"Pickle",
+    icon:"🧊",
+    color:"var(--c-pkl)",
+    colorDim:"var(--c-pkl-dim)",
+    line:"Line 3 — Freezing the Brain",
+    title:"Python Pickle / Joblib",
+    tagline:"Training takes minutes. Answering a question should take milliseconds. This is why.",
+    items:[
+      "We never want to retrain the model every single time it's needed",
+      "So the trained pipeline gets frozen into one portable file",
+      "That frozen file gets loaded instantly when the API starts",
+      "Same model, same preprocessing, identical result every time",
+      "This is the trick that makes predictions feel instant"
+    ],
+    note:"Think of it as a photograph of a fully-trained brain — no re-learning, just recall."
+  },
+  {
+    key:"ui",
+    label:"UI",
+    icon:"🎨",
+    color:"var(--c-ui)",
+    colorDim:"var(--c-ui-dim)",
+    line:"Line 4 — Giving It a Face",
+    title:"The Interface",
+    tagline:"People don't talk to APIs. They click buttons. So the model needs a face.",
+    items:[
+      "Build a simple interface with HTML, CSS and JavaScript",
+      "As ML engineers, our job isn't to be designers",
+      "So we lean on AI to design and build that interface for us",
+      "Then we just plug it into the API we already built"
+    ],
+    note:"Keep this stop short on purpose — the interesting engineering already happened at the first three stops."
+  },
+  {
+    key:"deploy",
+    label:"Deploy",
+    icon:"🚀",
+    color:"var(--c-deploy)",
+    colorDim:"var(--c-deploy-dim)",
+    line:"Line 5 — Going Live",
+    title:"Deployment on Render",
+    tagline:"Everything works on localhost. The last stop is making it work for everyone else, too.",
+    items:[
+      "There are two different pieces, so they get two different homes",
+      "The interface (HTML, CSS, JS) deploys as a Static Site",
+      "The API and model deploy as a Web Service",
+      "Connect the project, and Render builds and deploys it automatically",
+      "The result: a live link — not just something running on your laptop"
+    ],
+    note:"This is the moment the project stops being \"a notebook\" and becomes \"a product.\""
+  }
+];
+
+let current = 0;
+const checkedState = STOPS.map(s => new Array(s.items.length).fill(false));
+
+/* ============================================================
+   AMBIENT BACKGROUND PARTICLES
+   ============================================================ */
+(function spawnBgDots(){
+  const wrap = document.getElementById("bgDots");
+  const glowColors = ["#fccc0a","#00c46a","#3b82f6","#c14fd4","#ff7a29"];
+  for(let i=0;i<16;i++){
+    const d = document.createElement("div");
+    d.className = "bg-dot";
+    const size = 3 + Math.random()*5;
+    d.style.width = size+"px";
+    d.style.height = size+"px";
+    d.style.left = Math.random()*100+"vw";
+    d.style.top = Math.random()*100+"vh";
+    d.style.background = glowColors[Math.floor(Math.random()*glowColors.length)];
+    d.style.setProperty("--dot-op", (0.2+Math.random()*0.35).toFixed(2));
+    d.style.animationDuration = (5+Math.random()*6)+"s";
+    d.style.animationDelay = (Math.random()*4)+"s";
+    wrap.appendChild(d);
+  }
+})();
+
+/* ripple effect on every .btn */
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".btn");
+  if(!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.6;
+  const ripple = document.createElement("span");
+  ripple.className = "ripple";
+  ripple.style.width = ripple.style.height = size+"px";
+  ripple.style.left = (e.clientX - rect.left - size/2)+"px";
+  ripple.style.top = (e.clientY - rect.top - size/2)+"px";
+  btn.appendChild(ripple);
+  setTimeout(()=>ripple.remove(), 600);
+});
+
+/* count-up animation for a text node like "3 / 8" */
+function animateCount(el, from, to, suffix){
+  const dur = 320;
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now-start)/dur);
+    const val = Math.round(from + (to-from)*p);
+    el.innerHTML = `<b>${val}</b>${suffix}`;
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* small puffs emitted from the train while it travels */
+function emitPuffs(){
+  const track = document.querySelector(".track");
+  const trainEl = document.getElementById("train");
+  let ticks = 0;
+  const iv = setInterval(()=>{
+    const rect = trainEl.getBoundingClientRect();
+    const trackRect = track.getBoundingClientRect();
+    const puff = document.createElement("div");
+    puff.className = "puff";
+    puff.style.left = (rect.left - trackRect.left + rect.width/2)+"px";
+    track.appendChild(puff);
+    setTimeout(()=>puff.remove(), 650);
+    ticks++;
+    if(ticks>5) clearInterval(iv);
+  }, 90);
+}
+
+/* ============================================================
+   BUILD STATIONS
+   ============================================================ */
+const stationsEl = document.getElementById("stations");
+STOPS.forEach((s, i)=>{
+  const btn = document.createElement("button");
+  btn.className = "station";
+  btn.innerHTML = `<span class="dot"></span><span class="label">${s.label}</span>`;
+  btn.addEventListener("click", ()=> goTo(i));
+  stationsEl.appendChild(btn);
+});
+
+/* ============================================================
+   BUILD STOP CARDS
+   ============================================================ */
+const stage = document.getElementById("stage");
+STOPS.forEach((s, i)=>{
+  const card = document.createElement("div");
+  card.className = "stop-card";
+  card.id = "card-"+i;
+
+  const itemsHtml = s.items.map((txt, j)=>`
+    <li data-i="${j}" style="animation-delay:${j*0.05}s">
+      <span class="check-box"><svg viewBox="0 0 16 16"><polyline points="3,8 6.5,12 13,4"/></svg></span>
+      <span class="text">${txt}</span>
+    </li>`).join("");
+
+  card.innerHTML = `
+    <div class="stop-head">
+      <span class="stop-num" style="background:${s.color}">STOP ${i+1} / ${STOPS.length}</span>
+      <span class="stop-line">${s.line}</span>
+    </div>
+    <h2 class="stop-title"><span class="icon-float">${s.icon}</span> ${s.title}</h2>
+    <p class="stop-tagline">${s.tagline}</p>
+    <ul class="checklist" id="list-${i}">${itemsHtml}</ul>
+    <div class="aside-note" id="note-${i}">💡 ${s.note}</div>
+    <div class="progress-pill" id="pill-${i}">0 / ${s.items.length} checked off</div>
+    <div class="stage-nav">
+      <button class="btn btn-ghost" id="prevBtn-${i}">← Previous stop</button>
+      <button class="btn btn-primary" id="nextBtn-${i}">Next stop →</button>
+    </div>
+  `;
+  stage.appendChild(card);
+});
+
+/* checklist click handling */
+STOPS.forEach((s,i)=>{
+  const list = document.getElementById("list-"+i);
+  list.querySelectorAll("li").forEach(li=>{
+    li.addEventListener("click", ()=>{
+      const j = +li.dataset.i;
+      checkedState[i][j] = !checkedState[i][j];
+      li.classList.toggle("checked", checkedState[i][j]);
+      const checkedCount = checkedState[i].filter(Boolean).length;
+      const prevCount = checkedState[i][j] ? checkedCount - 1 : checkedCount + 1;
+      const pillEl = document.getElementById("pill-"+i);
+      animateCount(pillEl, prevCount, checkedCount, ` / ${s.items.length} checked off`);
+      if(checkedCount === s.items.length){
+        document.getElementById("note-"+i).classList.add("show");
+      }
+    });
+  });
+  document.getElementById("prevBtn-"+i).addEventListener("click", ()=> goTo(i-1));
+  document.getElementById("nextBtn-"+i).addEventListener("click", ()=>{
+    if(i === STOPS.length-1){ showTerminus(); } else { goTo(i+1); }
+  });
+});
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function render(){
+  document.getElementById("terminus").classList.remove("active");
+  document.querySelectorAll(".stop-card").forEach((c,idx)=>{
+    c.classList.toggle("active", idx===current);
+  });
+  document.querySelectorAll(".station").forEach((st,idx)=>{
+    st.classList.toggle("active", idx===current);
+    st.classList.toggle("done", idx<current);
+  });
+  document.getElementById("prevBtn-"+current) && (document.getElementById("prevBtn-"+current).disabled = current===0);
+
+  const pct = (current/(STOPS.length-1))*100;
+  document.getElementById("trackFill").style.width = pct+"%";
+  document.getElementById("train").style.left = pct+"%";
+  emitPuffs();
+
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function goTo(i){
+  if(i<0) i=0;
+  if(i>STOPS.length-1) i=STOPS.length-1;
+  current = i;
+  render();
+}
+
+function showTerminus(){
+  document.querySelectorAll(".stop-card").forEach(c=>c.classList.remove("active"));
+  document.querySelectorAll(".station").forEach(st=>st.classList.add("done"));
+  document.getElementById("trackFill").style.width = "100%";
+  document.getElementById("train").style.left = "100%";
+  document.getElementById("terminus").classList.add("active");
+  buildRecap();
+  launchConfetti();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function restart(){
+  current = 0;
+  checkedState.forEach(arr=>arr.fill(false));
+  document.querySelectorAll(".checklist li").forEach(li=>li.classList.remove("checked"));
+  document.querySelectorAll(".aside-note").forEach(n=>n.classList.remove("show"));
+  STOPS.forEach((s,i)=>{
+    document.getElementById("pill-"+i).innerHTML = `0 / ${s.items.length} checked off`;
+  });
+  render();
+}
+
+function buildRecap(){
+  const grid = document.getElementById("recapGrid");
+  grid.innerHTML = STOPS.map((s,i)=>`
+    <div class="recap-item" style="--stop-color:${s.color}; opacity:0; animation:pop-in .4s cubic-bezier(.34,1.56,.64,1) forwards; animation-delay:${0.15 + i*0.09}s">
+      <div class="ic">${s.icon}</div>
+      <div class="t">${s.title}</div>
+    </div>
+  `).join("");
+}
+
+function launchConfetti(){
+  const colors = ["#fccc0a","#00c46a","#3b82f6","#c14fd4","#ff7a29","#ef4136"];
+  for(let i=0;i<60;i++){
+    const el = document.createElement("div");
+    el.className = "confetti";
+    el.style.left = Math.random()*100+"vw";
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (2.5+Math.random()*1.8)+"s";
+    el.style.animationDelay = (Math.random()*0.4)+"s";
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 5000);
+  }
+}
+
+/* keyboard nav */
+document.addEventListener("keydown", (e)=>{
+  if(document.getElementById("terminus").classList.contains("active")) return;
+  if(e.key === "ArrowRight"){
+    if(current === STOPS.length-1) showTerminus(); else goTo(current+1);
+  }
+  if(e.key === "ArrowLeft") goTo(current-1);
+});
+
+render();
+</script>
+</body>
+</html>
