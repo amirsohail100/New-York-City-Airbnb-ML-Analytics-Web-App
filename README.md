@@ -18,13 +18,13 @@ An end-to-end Machine Learning web application designed to evaluate and predict 
 
 ## 🖼️ Application Preview
 
-![NYC Airbnb App Preview](New_York_City_.png)
+![NYC Airbnb App Preview](assets\New_York_City_.png)
 
 ---
 
 ## 🖼️ Application Preview & UI
 
-![New York City Airbnb ML & Analytics Web App UI](UI.png)
+![New York City Airbnb ML & Analytics Web App UI](assets\UI.png)
 
 ---
 
